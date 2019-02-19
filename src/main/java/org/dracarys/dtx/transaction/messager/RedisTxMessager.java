@@ -46,12 +46,12 @@ public class RedisTxMessager implements TxMessagerInterface {
 			@Override
 			public void onMessage(Message message, byte[] pattern) {
 				boolean iscommit = (Boolean) redisTemplate.getValueSerializer().deserialize(message.getBody());
-				logger.debug("DUBBOTX 子事务，收到事务提交通知：" + txId + "commit:" + iscommit);
+				logger.debug("RPCTX 子事务，收到事务提交通知：" + txId + "commit:" + iscommit);
 				txm.processSubTx(iscommit, status, dataSource, txId);
 			}
 		};
 		redisMsgListenerContainer.addMessageListener(ls, tp);
-		logger.debug("DUBBOTX 子事务，开启事务监听：" + txId);
+		logger.debug("RPCTX 子事务，开启事务监听：" + txId);
 		listenerMap.put(txId, ls);
 	}
 
