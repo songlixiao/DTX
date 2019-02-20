@@ -16,6 +16,7 @@ public interface TxContextInterface {
 
 	/**
 	 * 是否在RPC环境中
+	 * （当前事务是被RPC调用触发的，或者当前事务内部调用了其他微服务，都算是在RPC环境中）
 	 * 
 	 * @return
 	 */

@@ -15,7 +15,6 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
-import org.dracarys.dtx.rpc.filter.DubboTransactionFilter;
 import org.dracarys.dtx.transaction.context.NoRpcTxContext;
 import org.dracarys.dtx.transaction.context.TxContextInterface;
 import org.dracarys.dtx.transaction.messager.NoTxMessager;
@@ -34,7 +33,8 @@ import org.springframework.util.StringUtils;
  * <P>
  * 使用说明： <br/>
  * 1.修改spring配置文件，将事务管理器改为本类。 <br/>
- * 2.在需要向下（方法内部调用的RPC服务）传递事务时，使用本包内的过滤器{@link DubboTransactionFilter}作为调用方过滤器。如果不使用过滤器传递事务，则服务方的事务将视为独立事务。<br/>
+ * 2.在需要向下（方法内部调用的RPC服务）传递事务时，需要将本类中的事务ID（DistributedTransactionManager.TX_ID.get()）向下传递。如果不向下传递，则服务方的事务将视为独立事务。
+ * 	当前已经提供了Dubbo版本的事务传递过滤器,详见：${@link org.dracarys.dtx.dubbo.DubboTransactionFilter}。<br/>
  * 3.服务方本身也需要启用事务管理。否则即使使用了DistributedTransactionManager向下传递了事务，服务方仍无法参与到外层的事务当中。<br/>
  * 配置示例如下： <xmp> 
  * <!-- DubboTransactionManager需要通过Redis传递和接收“提交”、“回滚”通知 。（详细redis配置略）-->
@@ -205,7 +205,7 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 					super.doCleanupAfterCompletion(transaction);
 				} else {
 					// 不是根事务不要销毁事务，等待RPC上下文中进一步的指令
-					logger.debug("RPCTX 子事务，提交，暂不销毁本地事务管理器，等待根事务指令：" + getRpcTxID());
+					logger.debug("RPCTX 子事务，提交，暂不销毁本地事务管理器，等待根事务指令或超时：" + getRpcTxID());
 				}
 			}
 		}

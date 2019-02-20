@@ -1,7 +1,9 @@
 /**
  * 
  */
-package org.dracarys.dtx.transaction.context;
+package org.dracarys.dtx.dubbo;
+
+import org.dracarys.dtx.transaction.context.TxContextInterface;
 
 import com.alibaba.dubbo.rpc.RpcContext;
 
