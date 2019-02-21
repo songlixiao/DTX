@@ -29,7 +29,7 @@ public class SpringCloudTxContext implements TxContextInterface {
 
 	@Override
 	public boolean isInRpc() {
-		return getTxIDFromContext() == null || (RPCTX_CALLED.get() != null && RPCTX_CALLED.get());
+		return getTxIDFromContext() != null || (RPCTX_CALLED.get() != null && RPCTX_CALLED.get());
 	}
 
 	@Override
