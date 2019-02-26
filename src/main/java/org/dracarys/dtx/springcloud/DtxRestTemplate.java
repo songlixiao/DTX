@@ -35,6 +35,7 @@ public class DtxRestTemplate extends RestTemplate {
 		ClientHttpRequest request = super.createRequest(url, method);
 		// 将当前的TxId放入到Header中，向下传递。
 		request.getHeaders().set(TxContextInterface.KEY_RPC_TX_ID, DistributedTransactionManager.TX_ID.get());
+		SpringCloudTxContext.RPCTX_CALLED.set(true);
 		return request;
 	}
 

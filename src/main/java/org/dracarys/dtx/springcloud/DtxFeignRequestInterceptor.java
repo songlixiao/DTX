@@ -21,6 +21,7 @@ public class DtxFeignRequestInterceptor implements RequestInterceptor {
 	@Override
 	public void apply(RequestTemplate template) {
 		template.header(TxContextInterface.KEY_RPC_TX_ID, DistributedTransactionManager.TX_ID.get());
+		SpringCloudTxContext.RPCTX_CALLED.set(true);
 	}
 
 }

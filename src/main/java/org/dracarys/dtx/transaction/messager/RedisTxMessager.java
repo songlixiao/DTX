@@ -28,19 +28,26 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
  */
 public class RedisTxMessager implements TxMessagerInterface {
 
-	protected transient Log						logger		= LogFactory.getLog(getClass());
+	protected transient Log					logger		= LogFactory.getLog(getClass());
 
 	private Map<String, MessageListener>	listenerMap	= new HashMap<>();
 
 	@Autowired
-	protected RedisTemplate<?, ?>				redisTemplate;
+	protected RedisTemplate<?, ?>			redisTemplate;
 
 	@Autowired
-	private RedisMessageListenerContainer		redisMsgListenerContainer;
+	private RedisMessageListenerContainer	redisMsgListenerContainer;
+
+	public RedisTxMessager() {
+	}
+
+	public RedisTxMessager(RedisTemplate<?, ?> redisTemplate, RedisMessageListenerContainer redisMsgListenerContainer) {
+		this.redisTemplate = redisTemplate;
+		this.redisMsgListenerContainer = redisMsgListenerContainer;
+	}
 
 	@Override
-	public void addListener(DistributedTransactionManager txm, String txId, DefaultTransactionStatus status,
-			DataSource dataSource) {
+	public void addListener(DistributedTransactionManager txm, String txId, DefaultTransactionStatus status, DataSource dataSource) {
 		final Topic tp = new ChannelTopic(KEY_PREFIX_MSG_DTX_COMMITED + txId);
 		final MessageListener ls = new MessageListener() {
 			@Override
@@ -68,7 +75,7 @@ public class RedisTxMessager implements TxMessagerInterface {
 	public void sendMessage(String txId, boolean doCommit) {
 		redisTemplate.convertAndSend(KEY_PREFIX_MSG_DTX_COMMITED + txId, true);
 	}
-	
+
 	@Override
 	public boolean isProcessed(String txId) {
 		// 找不到认为已经运行过

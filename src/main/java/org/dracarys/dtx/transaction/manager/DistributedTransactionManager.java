@@ -96,6 +96,14 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 	 * 等待RPC根事务通知超时时间（超时后没有收到消息当前事务回滚）
 	 */
 	private Long							waitRpcTxMessageTimeout	= 1000L * 10;
+	
+	public DistributedTransactionManager() {
+		super();
+	}
+	
+	public DistributedTransactionManager(DataSource dataSource) {
+		super(dataSource);
+	}
 
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
@@ -192,7 +200,7 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 
 		if (!isInRpc()) {
 			// 不在RPC环境中，与原来逻辑相同
-			logger.debug("RPCTX 不再RPC环境中，销毁本地事务管理器：" + getRpcTxID());
+			logger.debug("RPCTX 不在RPC环境中，销毁本地事务管理器：" + getRpcTxID());
 			super.doCleanupAfterCompletion(transaction);
 		} else {
 			// 在RPC环境中，当前线程事务因异常回滚，与原来事务结束处理相同，结束事务。
@@ -238,5 +246,13 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 		}
 
 		return txId;
+	}
+
+	public void setTxMessager(TxMessagerInterface txMessager) {
+		this.txMessager = txMessager;
+	}
+
+	public void setTxContext(TxContextInterface txContext) {
+		this.txContext = txContext;
 	}
 }
