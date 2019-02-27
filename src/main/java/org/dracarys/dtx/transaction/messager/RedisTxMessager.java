@@ -53,7 +53,7 @@ public class RedisTxMessager implements TxMessagerInterface {
 			@Override
 			public void onMessage(Message message, byte[] pattern) {
 				boolean iscommit = (Boolean) redisTemplate.getValueSerializer().deserialize(message.getBody());
-				logger.debug("RPCTX 子事务，收到事务提交通知：" + txId + "commit:" + iscommit);
+				logger.debug("RPCTX 子事务，收到事务提交通知：" + txId + " commit=" + iscommit);
 				txm.processSubTx(iscommit, status, dataSource, txId);
 			}
 		};
@@ -73,7 +73,7 @@ public class RedisTxMessager implements TxMessagerInterface {
 
 	@Override
 	public void sendMessage(String txId, boolean doCommit) {
-		redisTemplate.convertAndSend(KEY_PREFIX_MSG_DTX_COMMITED + txId, true);
+		redisTemplate.convertAndSend(KEY_PREFIX_MSG_DTX_COMMITED + txId, doCommit);
 	}
 
 	@Override

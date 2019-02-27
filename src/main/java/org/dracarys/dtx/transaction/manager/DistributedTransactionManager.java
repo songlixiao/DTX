@@ -141,7 +141,7 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 				new Timer(true).schedule(new TimerTask() {
 					@Override
 					public void run() {
-						logger.debug("RPCTX 子事务，等待根事务通知超时，自动回滚：" + txId);
+						logger.debug("RPCTX 子事务，等待根事务通知超时结束，尝试自动回滚：" + txId);
 						processSubTx(false, status, dataSource, txId);
 					}
 				}, waitRpcTxMessageTimeout);
@@ -164,8 +164,11 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 		synchronized (txId) {
 			if (txMessager.isProcessed(txId)) {
 				// 已经处理过，不再进行处理。
+				logger.debug("RPCTX 子事务，已经处理完毕，跳过本次处理：" + txId);
 				return;
 			}
+			logger.debug("RPCTX 子事务" + txId + "，开始提交/回滚：commit=" + iscommit);
+			
 			if (iscommit) {
 				super.doCommit(status);
 			} else {
