@@ -1,7 +1,7 @@
 package org.dracarys.dtx.springcloud;
 
 import org.dracarys.dtx.transaction.context.TxContextInterface;
-import org.dracarys.dtx.transaction.manager.DistributedTransactionManager;
+import org.dracarys.dtx.transaction.manager.CurrtenTransaction;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
@@ -20,7 +20,7 @@ public class DtxFeignRequestInterceptor implements RequestInterceptor {
 
 	@Override
 	public void apply(RequestTemplate template) {
-		template.header(TxContextInterface.KEY_RPC_TX_ID, DistributedTransactionManager.TX_ID.get());
+		template.header(TxContextInterface.KEY_RPC_TX_ID, CurrtenTransaction.getTX_ID());
 		SpringCloudTxContext.RPCTX_CALLED.set(true);
 	}
 

@@ -12,7 +12,7 @@ package org.dracarys.dtx.dubbo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dracarys.dtx.transaction.context.TxContextInterface;
-import org.dracarys.dtx.transaction.manager.DistributedTransactionManager;
+import org.dracarys.dtx.transaction.manager.CurrtenTransaction;
 
 import com.alibaba.dubbo.rpc.Filter;
 import com.alibaba.dubbo.rpc.Invocation;
@@ -49,8 +49,8 @@ public class DubboTransactionFilter implements Filter {
 	@Override
 	public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
 		// 传递从ThreadLocal中拿到的ID，而不是生成新的ID再传递，考虑到调用端自身无事务情况
-		logger.debug("DUBBOTX，传递参数TXID:" + DistributedTransactionManager.TX_ID.get());
-		RpcContext.getContext().setAttachment(TxContextInterface.KEY_RPC_TX_ID, DistributedTransactionManager.TX_ID.get());
+		logger.debug("DUBBOTX，传递参数TXID:" + CurrtenTransaction.getTX_ID());
+		RpcContext.getContext().setAttachment(TxContextInterface.KEY_RPC_TX_ID, CurrtenTransaction.getTX_ID());
 		return invoker.invoke(invocation);
 	}
 }

@@ -71,18 +71,6 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 	private static final long				serialVersionUID		= 1L;
 
 	/**
-	 * 当前线程事务是否回滚
-	 */
-	protected static ThreadLocal<Boolean>	isRollback				= new ThreadLocal<>();
-
-	/**
-	 * 当前线程是否是RPC事务的根事务
-	 */
-	protected static ThreadLocal<Boolean>	isRpcRootTransaction	= new ThreadLocal<>();
-
-	public static ThreadLocal<String>		TX_ID					= new ThreadLocal<>();
-
-	/**
 	 * 事务消息管理器
 	 */
 	private TxMessagerInterface				txMessager				= new NoTxMessager();
@@ -107,19 +95,19 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
-		isRollback.set(false);
-		isRpcRootTransaction.set(false);
+		CurrtenTransaction.setRollback(false);
+		CurrtenTransaction.setRpcRootTransaction(false);
 		super.doBegin(transaction, definition);
 		// 不管事务开启时，是否在RPC上下文中，都需要创建RPC事务ID，以防止在事务过程中，调用其他RPC服务。
 		// 防止当前线程内包含多个独立事务，造成它们使用相同的TxID，事务开启必须清除之前事务的ID。(如果使用了相同的事务ID，这些独立事务中调用了Dubbo服务后，会造成后继的事务监听事务状态时发生错乱。）
-		TX_ID.remove();
+		CurrtenTransaction.removeTxID();
 		// 当调用Dubbo服务后，过滤器会向后传递事务ID。
 		getRpcTxID();
 	}
 
 	@Override
 	protected void doCommit(final DefaultTransactionStatus status) {
-		isRollback.set(false);
+		CurrtenTransaction.setRollback(false);
 		if (!isInRpc()) {
 			// 不在RPC环境中才需要真正提交
 			logger.debug("RPCTX 不在RPC环境，本地事务提交：" + getRpcTxID());
@@ -127,7 +115,7 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 		} else {
 			// 在RPC环境中，需要等待RPC环境的事务指令再处理。
 			final String txId = getRpcTxID();
-			if (isRpcRootTransaction.get()) {
+			if (CurrtenTransaction.isRpcRootTransaction()) {
 				// 如果自己是RPC链条中的顶级事务，需要发出全局提交指令，并自己提交事务。
 				logger.debug("RPCTX 根事务 RCP环境向子事务发送提交通知，并提交本地事务：" + txId);
 				txMessager.sendMessage(txId, true);
@@ -188,8 +176,8 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 	@Override
 	protected void doRollback(DefaultTransactionStatus status) {
 		// 此方法被调用，一定是当前事务中抛出异常导致回滚。（不管是否在RPC环境中都需要继续执行）
-		isRollback.set(true);
-		if (isRpcRootTransaction.get()) {
+		CurrtenTransaction.setRollback(true);
+		if (CurrtenTransaction.isRpcRootTransaction()) {
 			logger.debug("RPCTX 根事务 在RPC环境 向子事务发出回滚通知：" + getRpcTxID());
 			// 如果是RPC 顶级事务回滚，则发出全局回滚指令。
 			txMessager.sendMessage(getRpcTxID(), false);
@@ -207,11 +195,11 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 			super.doCleanupAfterCompletion(transaction);
 		} else {
 			// 在RPC环境中，当前线程事务因异常回滚，与原来事务结束处理相同，结束事务。
-			if (isRollback.get()) {
+			if (CurrtenTransaction.isRollback()) {
 				logger.debug("RPCTX 事务在RPC环境中本地发生回滚，销毁本地事务管理器：" + getRpcTxID());
 				super.doCleanupAfterCompletion(transaction);
 			} else {
-				if (isRpcRootTransaction.get()) {
+				if (CurrtenTransaction.isRpcRootTransaction()) {
 					logger.debug("RPCTX 根事务，提交。销毁本地事务管理器：" + getRpcTxID());
 					super.doCleanupAfterCompletion(transaction);
 				} else {
@@ -221,7 +209,7 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 			}
 		}
 		// 本地事务不需要传递txid，RPC事务已经发送了通知，也不需要txid了
-		TX_ID.remove();
+		CurrtenTransaction.removeTxID();;
 	}
 
 	public void doDubboTxCleanup(Object transaction, DataSource dataSource) {
@@ -236,16 +224,16 @@ public class DistributedTransactionManager extends DataSourceTransactionManager 
 	}
 
 	protected String getRpcTxID() {
-		String txId = TX_ID.get();
+		String txId = CurrtenTransaction.getTX_ID();
 		// 当前线程中没有ID，则从RPC上下文中取，如果RPC上下文也没有，则生成新的的ID放入当前线程中。（RPC上下文中的ID传递使用RPC过滤器实现）
 		if (!StringUtils.hasText(txId)) {
 			txId = txContext.getTxIDFromContext();
 			if (!StringUtils.hasText(txId)) {
 				txId = UUID.randomUUID().toString();
-				isRpcRootTransaction.set(true);
+				CurrtenTransaction.setRpcRootTransaction(true);
 				logger.debug("RPCTX 未读取到RPC上下文中的事务ID，生成新的事务ID，当前线程作为根事务。" + txId);
 			}
-			TX_ID.set(txId);
+			CurrtenTransaction.setTX_ID(txId);
 		}
 
 		return txId;

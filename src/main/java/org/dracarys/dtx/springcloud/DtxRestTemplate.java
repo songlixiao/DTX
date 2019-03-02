@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.dracarys.dtx.transaction.context.TxContextInterface;
-import org.dracarys.dtx.transaction.manager.DistributedTransactionManager;
+import org.dracarys.dtx.transaction.manager.CurrtenTransaction;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.web.client.RestTemplate;
@@ -34,7 +34,7 @@ public class DtxRestTemplate extends RestTemplate {
 	protected ClientHttpRequest createRequest(URI url, HttpMethod method) throws IOException {
 		ClientHttpRequest request = super.createRequest(url, method);
 		// 将当前的TxId放入到Header中，向下传递。
-		request.getHeaders().set(TxContextInterface.KEY_RPC_TX_ID, DistributedTransactionManager.TX_ID.get());
+		request.getHeaders().set(TxContextInterface.KEY_RPC_TX_ID, CurrtenTransaction.getTX_ID());
 		SpringCloudTxContext.RPCTX_CALLED.set(true);
 		return request;
 	}
