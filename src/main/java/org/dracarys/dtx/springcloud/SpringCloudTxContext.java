@@ -21,7 +21,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * @date 2019年2月20日 下午4:50:08
  * @ModifyRemarks
  * @version:V1.0
- * 
  */
 public class SpringCloudTxContext implements TxContextInterface {
 
