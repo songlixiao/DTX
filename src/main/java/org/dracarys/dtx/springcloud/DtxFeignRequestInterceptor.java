@@ -8,7 +8,6 @@ import feign.RequestTemplate;
 
 /**
  * Spring Cloud 客户端用Feign时，添加调用拦截，传递TxID。
- * 
  * @ClassName DtxFeignRequestInterceptor
  * @author songlixiao_qd@163.com
  * @date 2019年2月25日 下午5:27:33
