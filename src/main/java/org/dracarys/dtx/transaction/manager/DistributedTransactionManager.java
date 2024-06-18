@@ -64,7 +64,6 @@ import org.springframework.util.StringUtils;
  * @date 2018年8月16日 上午11:25:54
  * @ModifyRemarks
  * @version:V1.0
- * 
  */
 public class DistributedTransactionManager extends DataSourceTransactionManager {
 
